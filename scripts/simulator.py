@@ -240,7 +240,7 @@ def simulate(beta, gamma, rho, N=200, p_edge=0.05, n_infected0=5, T=200, rng=Non
 # ── Numba JIT kernel ──────────────────────────────────────────────────────────
 
 
-@njit(cache=True)
+@njit(cache=True, nogil=True)
 def _simulate_core(beta, gamma, rho, N, p_edge, n_infected0, T, seed):
     """JIT-compiled simulation kernel.
 
@@ -385,7 +385,9 @@ def _simulate_core(beta, gamma, rho, N, p_edge, n_infected0, T, seed):
 # ── Single-run public interface ───────────────────────────────────────────────
 
 
-def simulate_fast(beta, gamma, rho, N=200, p_edge=0.05, n_infected0=5, T=200, rng=None):
+def simulate_fast(
+    beta: float, gamma, rho, N=200, p_edge=0.05, n_infected0=5, T=200, rng=None
+):
     """Run one replicate of the adaptive-network SIR model.
 
     Drop-in replacement for the reference simulator with identical parameters
@@ -437,19 +439,10 @@ def simulate_fast(beta, gamma, rho, N=200, p_edge=0.05, n_infected0=5, T=200, rn
 
 # ── Parallel batch interface ──────────────────────────────────────────────────
 
-
-def simulate_batch(
-    thetas,
-    n_replicates=1,
-    N=200,
-    p_edge=0.05,
-    n_infected0=5,
-    T=200,
-    n_jobs=-1,
-    rng=None,
-):
+'''def simulate_batch(thetas, n_replicates=1, N=200, p_edge=0.05, n_infected0=5,
+                   T=200, n_jobs=-1, rng=None):
     """Run many simulations in parallel — the main entry point for ABC.
-
+ 
     Parameters
     ----------
     thetas : array-like, shape (M, 3)
@@ -466,13 +459,13 @@ def simulate_batch(
     rng : numpy.random.Generator or None
         Master RNG used to derive per-run seeds deterministically.
         Pass np.random.default_rng(seed) for fully reproducible batches.
-
+ 
     Returns
     -------
     results : list of lists, shape (M, n_replicates)
         results[i][r] is the (infected_fraction, rewire_counts, degree_histogram)
         tuple for parameter draw i and replicate r.
-
+ 
     Example
     -------
     >>> rng = np.random.default_rng(42)
@@ -485,12 +478,61 @@ def simulate_batch(
     M = len(thetas)
     if rng is None:
         rng = np.random.default_rng()
-
-    # Draw all seeds upfront (M draws × n_replicates) for reproducibility
+ 
     seeds = rng.integers(0, 2**31, size=(M, n_replicates))
-
-    # Flatten to a single parallel call for maximum efficiency, then reshape
+ 
     flat_results = Parallel(n_jobs=n_jobs, prefer="threads")(
+        delayed(_simulate_core)(
+            thetas[i, 0], thetas[i, 1], thetas[i, 2],
+            int(N), float(p_edge), int(n_infected0), int(T), int(seeds[i, r]),
+        )
+        for i in range(M)
+        for r in range(n_replicates)
+    )
+ 
+    # Reshape from (M * n_replicates,) → (M, n_replicates)
+    return [
+        flat_results[i * n_replicates:(i + 1) * n_replicates]
+        for i in range(M)
+    ]'''
+
+
+def simulate_batch(
+    thetas, N=200, p_edge=0.05, n_infected0=5, T=200, n_jobs=-1, rng=None
+):
+    """Run many simulations in parallel — the main entry point for ABC.
+
+    Parameters
+    ----------
+    thetas : array-like, shape (M, 3)
+        Parameter matrix; each row is (beta, gamma, rho).
+    N, p_edge, n_infected0, T : same as simulate()
+        Shared fixed parameters applied to every run.
+    n_jobs : int, default=-1
+        Number of parallel workers.  -1 uses all available CPU cores.
+    rng : numpy.random.Generator or None
+        Master RNG used to derive per-run seeds deterministically.
+        Pass np.random.default_rng(seed) for fully reproducible batches.
+
+    Returns
+    -------
+    list of (infected_fraction, rewire_counts, degree_histogram) tuples,
+    one per row of thetas, in the same order.
+
+    Example
+    -------
+    >>> rng = np.random.default_rng(42)
+    >>> prior_samples = rng.uniform([0.05, 0.02, 0.0], [0.50, 0.20, 0.8], (1000, 3))
+    >>> results = simulate_batch(prior_samples, rng=rng)
+    """
+    thetas = np.asarray(thetas, dtype=float)
+    M = len(thetas)
+    if rng is None:
+        rng = np.random.default_rng()
+
+    seeds = rng.integers(0, 2**31, size=M)
+
+    return Parallel(n_jobs=n_jobs, prefer="threads")(
         delayed(_simulate_core)(
             thetas[i, 0],
             thetas[i, 1],
@@ -499,11 +541,7 @@ def simulate_batch(
             float(p_edge),
             int(n_infected0),
             int(T),
-            int(seeds[i, r]),
+            int(seeds[i]),
         )
         for i in range(M)
-        for r in range(n_replicates)
     )
-
-    # Reshape from (M * n_replicates,) → (M, n_replicates)
-    return [flat_results[i * n_replicates : (i + 1) * n_replicates] for i in range(M)]
