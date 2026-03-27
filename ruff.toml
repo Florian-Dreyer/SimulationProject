@@ -1,0 +1,43 @@
+# --- Target Version ---
+# Set this to your project's Python version
+target-version = "py311"
+
+# --- Global Exclusions ---
+# This is what stops Ruff from complaining about your notebooks
+extend-exclude = [
+    "*.ipynb",
+    ".venv",
+    "__pycache__",
+    "build",
+    "dist",
+]
+
+[lint]
+# 1. Enable specific rulesets
+# E/W: Pycodestyle (Standard PEP8)
+# F: Pyflakes (Logic errors/unused imports)
+# I: Isort (Import sorting)
+# B: Flake8-bugbear (Likely bugs)
+# UP: Pyupgrade (Modernize syntax)
+select = ["E", "W", "F", "I", "B", "UP"]
+
+# 2. Ignore specific rules if they are too annoying
+# E501: Line too long (Ruff format handles this, but lint can be strict)
+ignore = ["E501"]
+
+# 3. Allow unused imports in __init__.py files
+[lint.per-file-ignores]
+"__init__.py" = ["F401"]
+
+[format]
+# Use double quotes for strings (Standard Black style)
+quote-style = "double"
+
+# Indent with spaces (4 spaces)
+indent-style = "space"
+
+# Like Black, allow trailing commas for better git diffs
+skip-magic-trailing-comma = false
+
+# Automatically detect the appropriate line ending
+line-ending = "auto"

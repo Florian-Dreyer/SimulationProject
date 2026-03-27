@@ -439,10 +439,19 @@ def simulate_fast(
 
 # ── Parallel batch interface ──────────────────────────────────────────────────
 
-'''def simulate_batch(thetas, n_replicates=1, N=200, p_edge=0.05, n_infected0=5,
-                   T=200, n_jobs=-1, rng=None):
+
+def simulate_batch(
+    thetas,
+    n_replicates=1,
+    N=200,
+    p_edge=0.05,
+    n_infected0=5,
+    T=200,
+    n_jobs=-1,
+    rng=None,
+):
     """Run many simulations in parallel — the main entry point for ABC.
- 
+
     Parameters
     ----------
     thetas : array-like, shape (M, 3)
@@ -459,13 +468,14 @@ def simulate_fast(
     rng : numpy.random.Generator or None
         Master RNG used to derive per-run seeds deterministically.
         Pass np.random.default_rng(seed) for fully reproducible batches.
- 
+
     Returns
     -------
     results : list of lists, shape (M, n_replicates)
         results[i][r] is the (infected_fraction, rewire_counts, degree_histogram)
         tuple for parameter draw i and replicate r.
- 
+        When n_replicates=1, results[i] is a list of length 1.
+
     Example
     -------
     >>> rng = np.random.default_rng(42)
@@ -478,70 +488,26 @@ def simulate_fast(
     M = len(thetas)
     if rng is None:
         rng = np.random.default_rng()
- 
-    seeds = rng.integers(0, 2**31, size=(M, n_replicates))
- 
+
+    # Repeat each theta n_replicates times → shape (M * n_replicates, 3)
+    # This keeps joblib seeing a single flat list of tasks, preserving the
+    # parallel speedup from the n_replicates=1 version.
+    thetas_rep = np.repeat(thetas, n_replicates, axis=0)
+    seeds = rng.integers(0, 2**31, size=M * n_replicates)
+
     flat_results = Parallel(n_jobs=n_jobs, prefer="threads")(
         delayed(_simulate_core)(
-            thetas[i, 0], thetas[i, 1], thetas[i, 2],
-            int(N), float(p_edge), int(n_infected0), int(T), int(seeds[i, r]),
-        )
-        for i in range(M)
-        for r in range(n_replicates)
-    )
- 
-    # Reshape from (M * n_replicates,) → (M, n_replicates)
-    return [
-        flat_results[i * n_replicates:(i + 1) * n_replicates]
-        for i in range(M)
-    ]'''
-
-
-def simulate_batch(
-    thetas, N=200, p_edge=0.05, n_infected0=5, T=200, n_jobs=-1, rng=None
-):
-    """Run many simulations in parallel — the main entry point for ABC.
-
-    Parameters
-    ----------
-    thetas : array-like, shape (M, 3)
-        Parameter matrix; each row is (beta, gamma, rho).
-    N, p_edge, n_infected0, T : same as simulate()
-        Shared fixed parameters applied to every run.
-    n_jobs : int, default=-1
-        Number of parallel workers.  -1 uses all available CPU cores.
-    rng : numpy.random.Generator or None
-        Master RNG used to derive per-run seeds deterministically.
-        Pass np.random.default_rng(seed) for fully reproducible batches.
-
-    Returns
-    -------
-    list of (infected_fraction, rewire_counts, degree_histogram) tuples,
-    one per row of thetas, in the same order.
-
-    Example
-    -------
-    >>> rng = np.random.default_rng(42)
-    >>> prior_samples = rng.uniform([0.05, 0.02, 0.0], [0.50, 0.20, 0.8], (1000, 3))
-    >>> results = simulate_batch(prior_samples, rng=rng)
-    """
-    thetas = np.asarray(thetas, dtype=float)
-    M = len(thetas)
-    if rng is None:
-        rng = np.random.default_rng()
-
-    seeds = rng.integers(0, 2**31, size=M)
-
-    return Parallel(n_jobs=n_jobs, prefer="threads")(
-        delayed(_simulate_core)(
-            thetas[i, 0],
-            thetas[i, 1],
-            thetas[i, 2],
+            thetas_rep[k, 0],
+            thetas_rep[k, 1],
+            thetas_rep[k, 2],
             int(N),
             float(p_edge),
             int(n_infected0),
             int(T),
-            int(seeds[i]),
+            int(seeds[k]),
         )
-        for i in range(M)
+        for k in range(M * n_replicates)
     )
+
+    # Reshape from (M * n_replicates,) → (M, n_replicates)
+    return [flat_results[i * n_replicates : (i + 1) * n_replicates] for i in range(M)]
