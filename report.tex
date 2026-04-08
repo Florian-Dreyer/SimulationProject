@@ -316,8 +316,9 @@ Adjusted      & $\beta$  & 0.143 & 0.024 & 0.112 & 0.138 & 0.191 \\
 \subsection{Synthetic Likelihood \citep{wood2010}}
 \label{sec:sl}
 
-At each MCMC proposal $\theta$, we simulate $N_\mathrm{sim}=50$ datasets
-($R_\mathrm{sim}=40$ replicates each) and approximate the intractable
+At each MCMC proposal $\theta$, we simulate $N_\mathrm{sim}=150$ datasets
+($R_\mathrm{sim}=40$ replicates each), giving an $N_\mathrm{sim}/p$ ratio of
+$10.0$ for our $p=15$ summary features, and approximate the intractable
 likelihood as a multivariate Gaussian fitted to the $N_\mathrm{sim}$ summary
 vectors, using Ledoit--Wolf shrinkage for the covariance
 \citep{ledoitwolf2004}:
@@ -339,12 +340,15 @@ step-size tuning is required \citep{roberts1997}.
 Configuration: $N_\mathrm{steps}=2\,000$, burn-in $=500$,
 initialised at the regression-adjusted posterior mean
 $(0.143,\, 0.079,\, 0.299)$.
+The chain achieved an acceptance rate of $24.0\%$, consistent with the
+optimal AM target \citep{roberts1997}.
 
 \begin{figure}[h]
   \centering
   \includegraphics[width=\textwidth]{sl_trace}
-  \caption{MCMC trace plots after step-size tuning. The chain should mix
-           well with acceptance rate near 23\%.}
+  \caption{MCMC trace plots. The chain achieves an acceptance rate of 24.0\%
+           and mixes across the posterior, though the ACF decays slowly
+           (thinning interval 31), resulting in ESS of 7.5–11.9.}
   \label{fig:sl_trace}
 \end{figure}
 
@@ -357,16 +361,16 @@ $(0.143,\, 0.079,\, 0.299)$.
 
 \begin{table}[h]
 \centering
-\caption{Synthetic likelihood MCMC posterior (800 post-burn-in samples
-         after optimal step-size tuning).}
+\caption{Synthetic likelihood MCMC posterior (1500 post-burn-in samples,
+         thinning interval 31, 49 thinned draws; acceptance rate 24.0\%).}
 \label{tab:sl}
 \begin{tabular}{lrrrrrr}
 \toprule
 Param & Mean & Std & 5\% & Median & 95\% & ESS \\
 \midrule
-$\beta$  & 0.152 & 0.003 & 0.149 & 0.152 & 0.156 & 4 \\
-$\gamma$ & 0.080 & 0.002 & 0.077 & 0.082 & 0.082 & 5 \\
-$\rho$   & 0.302 & 0.007 & 0.295 & 0.300 & 0.314 & 4 \\
+$\beta$  & 0.153 & 0.003 & 0.148 & 0.153 & 0.158 & 7.5 \\
+$\gamma$ & 0.081 & 0.002 & 0.078 & 0.081 & 0.084 & 11.9 \\
+$\rho$   & 0.301 & 0.005 & 0.295 & 0.300 & 0.310 & 10.2 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -378,19 +382,23 @@ $\rho$   & 0.302 & 0.007 & 0.295 & 0.300 & 0.314 & 4 \\
 
 Table~\ref{tab:compare} summarises all methods.
 Point estimates are consistent across advanced methods
-($\hat\beta\approx0.14$–$0.21$, $\hat\gamma\approx0.08$–$0.11$,
-$\hat\rho\approx0.30$).
+($\hat\beta\approx0.14$–$0.15$, $\hat\gamma\approx0.079$–$0.081$,
+$\hat\rho\approx0.299$–$0.301$).
 Regression adjustment gives the most reliable uncertainty quantification:
 large accepted set ($n=500$), tolerance-robust, and verifiable via
 sensitivity analysis.
-The SL chain uses step sizes derived from the optimal scaling rule
-\citep{roberts1997}; results should be re-evaluated after re-running
-the notebook with the updated configuration.
+The SL posterior is the sharpest, but comes with important caveats:
+the low ESS (7.5–11.9) means the posterior is estimated from fewer than
+20 effectively independent draws despite 1500 post-burn-in samples, so
+the quoted standard deviations are unreliable.
+The tightness likely reflects the high $N_\mathrm{sim}=150$ per step
+combined with a multivariate normal approximation that may be
+overconfident for non-Gaussian summary statistics.
 
 \begin{table}[h]
 \centering
 \caption{Posterior standard deviations across all methods.
-         $^\dagger$Results pending re-run with tuned step sizes.}
+         $^\ddagger$SL std is unreliable due to low ESS (7.5–11.9).}
 \label{tab:compare}
 \begin{tabular}{lrrrr}
 \toprule
@@ -401,7 +409,7 @@ Rej.\ ABC ($q=1\%$)    & 0.062 & 0.020 & 0.061 & Balanced, $n=100$ \\
 LASSO ($q=1\%$)        & 0.062 & 0.020 & 0.061 & All 15 features kept \\
 Semi-auto ($q=1\%$)    & 0.023 & 0.017 & 0.051 & 3-d projection \\
 Reg.\ adj.\ ($q=5\%$)  & 0.024 & 0.007 & 0.008 & $n=500$, robust \\
-Synth.\ lik.$^\dagger$ & 0.003 & 0.002 & 0.007 & Step sizes tuned \\
+Synth.\ lik.$^\ddagger$ & 0.003 & 0.002 & 0.005 & $N_\mathrm{sim}=150$, accept.\ 24\% \\
 \bottomrule
 \end{tabular}
 \end{table}
