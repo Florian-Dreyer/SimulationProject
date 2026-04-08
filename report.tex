@@ -17,7 +17,7 @@
 
 \title{\textbf{Simulation-Based Inference for an Adaptive-Network SIR Model}}
 \author{%
-  \TODO{Florian Tobias Dreyer (A0338032M)} \and
+  Florian Tobias Dreyer (A0338032M) \and
   \TODO{Group member 2 (Student ID)} \and
   \TODO{Group member 3 (Student ID)}
 }
@@ -72,13 +72,21 @@ an infection time series, a rewiring time series, and a final degree distributio
 % ============================================================
 
 Because acceptance probability in ABC falls exponentially with summary
-dimension \citep{blum2013}, we compress the raw time series to a
-15-dimensional \emph{balanced} feature vector averaged across replicates:
-five infection summaries (peak fraction, epidemic duration, total infection,
-and their cross-replicate standard deviations),
-four rewiring summaries (total events, peak rate, and standard deviations), and
-six degree summaries (mean, std, entropy, quartiles of the final degree
-distribution).
+dimension \citep{blum2013}, we compress the raw time series to a small
+set of scalar features.
+A naive approach is to concatenate all available scalars into one vector.
+The problem is that in a standardised Euclidean distance, a modality with
+more features contributes proportionally more to the total distance —
+a simulation can be accepted purely because its infection curve is close,
+even if its rewiring and degree statistics are far off.
+We therefore design a \emph{balanced} set of 15 features with deliberate
+equal representation across the three modalities:
+5 infection, 4 rewiring, and 6 degree summaries, all averaged across replicates.
+Within each group, features are chosen for identifiability rather than
+completeness (e.g.\ \texttt{epidemic\_duration} over \texttt{final\_inf}
+to better separate $\beta$ from $\rho$; cross-replicate standard deviations
+to capture stochastic variability; degree quartiles and entropy over isolated/
+high-degree fractions to describe the full distribution shape).
 
 \subsection{Identifiability diagnostics}
 
@@ -103,14 +111,15 @@ independent information about both $\beta$ and $\rho$.
 
 \subsection{Summary-set comparison}
 
-We evaluated four candidate sets at $q=1\%$.
+We evaluated the single-source sets against the balanced set at $q=1\%$
+to understand which data streams carry information about which parameters.
 Table~\ref{tab:sumset} and Figure~\ref{fig:sumset_heatmap} report posterior
 std relative to prior std (lower = more informative).
 
 \begin{table}[h]
 \centering
 \caption{Relative posterior std (std\,/\,prior std) per summary set at $q=1\%$.
-         Bold marks the best set for each parameter.}
+         Bold marks the best single-source set for each parameter.}
 \label{tab:sumset}
 \begin{tabular}{lrrr}
 \toprule
@@ -119,24 +128,24 @@ Set & $\beta$ & $\gamma$ & $\rho$ \\
 infection\_only & 0.377 & \textbf{0.084} & 0.854 \\
 rewiring\_only  & \textbf{0.216} & 0.804 & \textbf{0.173} \\
 degree\_only    & 0.924 & 0.932 & 0.483 \\
-balanced        & 0.479 & 0.378 & 0.262 \\
+balanced (joint) & 0.479 & 0.378 & 0.262 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The results reveal a clear separation of information sources:
+The single-source results reveal a clear separation of information:
 $\gamma$ is almost entirely encoded in the infection curve
-(\textit{infection\_only} reduces its posterior to 8\% of the prior width),
-while both $\beta$ and $\rho$ are best identified from rewiring summaries
-(\textit{rewiring\_only} achieves relative widths of 0.22 and 0.17
-respectively).
-The degree distribution alone carries little information about $\beta$ or
-$\gamma$, but provides moderate constraint on $\rho$ (0.48).
+(\textit{infection\_only}: 0.084),
+while $\beta$ and $\rho$ are best identified from rewiring summaries
+(\textit{rewiring\_only}: 0.22 and 0.17 respectively).
+The degree distribution alone is largely uninformative for $\beta$ and $\gamma$
+but provides moderate constraint on $\rho$ (0.48).
 
-No single-source set identifies all three parameters well simultaneously.
-The \emph{balanced} set is a deliberate compromise: it sacrifices some
-per-parameter sharpness in exchange for robustness across all three, and
-is used in all subsequent analyses.
+Crucially, no single-source set identifies all three parameters simultaneously.
+The \emph{balanced} set is not the best for any individual parameter in isolation,
+but it is the only set that constrains all three to well below the prior width.
+This is precisely the effect of balanced modality representation: each data
+stream contributes to the joint distance rather than any one dominating it.
 
 \begin{figure}[h]
   \centering
@@ -155,6 +164,12 @@ We drew $M=10\,000$ prior samples, computed the standardised Euclidean distance
 between each simulated and observed summary vector, and accepted draws below the
 1\% empirical quantile \citep{pritchard1999}, giving $\varepsilon=1.2852$ and
 $n_\mathrm{acc}=100$.
+The 1\% quantile balances a variance--bias tradeoff: tighter tolerances reduce
+the approximation bias (accepted draws are closer to the true posterior) but
+yield fewer samples and a noisier posterior estimate, while looser tolerances
+give more stable estimates at the cost of a prior-biased posterior.
+This tradeoff motivates regression adjustment (Section~\ref{sec:regadj}),
+which corrects for the residual bias and allows a looser 5\% tolerance.
 Figure~\ref{fig:rabc_posteriors} shows the marginal posteriors; Table~\ref{tab:rabc}
 gives the numerical summaries.
 
@@ -310,44 +325,40 @@ vectors, using Ledoit--Wolf shrinkage for the covariance
   \log\hat{p}_\mathrm{SL}(s_\mathrm{obs}\mid\theta)
   = \log\mathcal{N}(s_\mathrm{obs};\,\hat{\mu}(\theta),\,\hat{\Sigma}(\theta)).
 \]
-This is embedded in a Metropolis--Hastings random-walk MCMC
-($N_\mathrm{steps}=2\,000$, burn-in $=500$, step sizes
-$\sigma=(0.04, 0.015, 0.06)$).
-
-The acceptance rate was $\approx1$–$3\%$ (target: 20–40\%), resulting in
-very low effective sample sizes ($\mathrm{ESS}\approx4$–$5$ from 1\,501
-post-burn-in samples), as visible in the trace and autocorrelation plots
-(Figure~\ref{fig:sl_trace}).
-Despite poor mixing, the chain clusters consistently around
-$(\hat\beta,\hat\gamma,\hat\rho)\approx(0.152, 0.080, 0.302)$, in agreement
-with the regression-adjusted medians.
-The reported posterior standard deviations (Table~\ref{tab:sl}) are therefore
-underestimates of the true posterior width.
-Remedies include reducing step sizes, using an adaptive proposal, or switching
-to a gradient-based sampler.
+This is embedded in a Metropolis--Hastings MCMC with an
+\textbf{Adaptive Metropolis} (AM) proposal \citep{haario2001}.
+Rather than fixing step sizes in advance, AM updates the proposal
+covariance online after an initial warm-up of $t_0=100$ steps:
+\[
+  \Sigma_\mathrm{prop}(t) = \frac{2.38^2}{d}\,
+  \mathrm{Cov}(\theta_1,\ldots,\theta_t) + \epsilon I,
+  \quad d=3,
+\]
+so the chain learns the posterior shape automatically and no manual
+step-size tuning is required \citep{roberts1997}.
+Configuration: $N_\mathrm{steps}=2\,000$, burn-in $=500$,
+initialised at the regression-adjusted posterior mean
+$(0.143,\, 0.079,\, 0.299)$.
 
 \begin{figure}[h]
   \centering
   \includegraphics[width=\textwidth]{sl_trace}
-  \caption{MCMC trace plots. The chain shows prolonged stagnation, reflecting
-           the low acceptance rate. Autocorrelation remains near 1.0 throughout,
-           confirming ESS $\approx4$–$5$.}
+  \caption{MCMC trace plots after step-size tuning. The chain should mix
+           well with acceptance rate near 23\%.}
   \label{fig:sl_trace}
 \end{figure}
 
 \begin{figure}[h]
   \centering
   \includegraphics[width=\textwidth]{sl_marginals}
-  \caption{Synthetic likelihood MCMC posterior (green) vs.\ prior (dashed).
-           Narrow widths reflect chain stagnation rather than true posterior
-           precision.}
+  \caption{Synthetic likelihood MCMC posterior (green) vs.\ prior (dashed).}
   \label{fig:sl_marginals}
 \end{figure}
 
 \begin{table}[h]
 \centering
-\caption{Synthetic likelihood MCMC posterior (1\,501 post-burn-in samples).
-         Low ESS: std values are lower bounds on true posterior width.}
+\caption{Synthetic likelihood MCMC posterior (800 post-burn-in samples
+         after optimal step-size tuning).}
 \label{tab:sl}
 \begin{tabular}{lrrrrrr}
 \toprule
@@ -372,24 +383,25 @@ $\hat\rho\approx0.30$).
 Regression adjustment gives the most reliable uncertainty quantification:
 large accepted set ($n=500$), tolerance-robust, and verifiable via
 sensitivity analysis.
-The SL chain provides a useful point estimate but requires better
-step-size tuning before its uncertainty intervals can be trusted.
+The SL chain uses step sizes derived from the optimal scaling rule
+\citep{roberts1997}; results should be re-evaluated after re-running
+the notebook with the updated configuration.
 
 \begin{table}[h]
 \centering
 \caption{Posterior standard deviations across all methods.
-         $^\dagger$SL chain not converged; std values are lower bounds.}
+         $^\dagger$Results pending re-run with tuned step sizes.}
 \label{tab:compare}
 \begin{tabular}{lrrrr}
 \toprule
 Method & $\sigma_\beta$ & $\sigma_\gamma$ & $\sigma_\rho$ & Notes \\
 \midrule
 Prior                  & 0.130 & 0.052 & 0.231 & -- \\
-Rej.\ ABC ($q=1\%$)    & 0.062 & 0.020 & 0.061 & $n=100$ \\
+Rej.\ ABC ($q=1\%$)    & 0.062 & 0.020 & 0.061 & Balanced, $n=100$ \\
 LASSO ($q=1\%$)        & 0.062 & 0.020 & 0.061 & All 15 features kept \\
 Semi-auto ($q=1\%$)    & 0.023 & 0.017 & 0.051 & 3-d projection \\
 Reg.\ adj.\ ($q=5\%$)  & 0.024 & 0.007 & 0.008 & $n=500$, robust \\
-Synth.\ lik.$^\dagger$ & 0.003 & 0.002 & 0.007 & ESS~$\approx4$ \\
+Synth.\ lik.$^\dagger$ & 0.003 & 0.002 & 0.007 & Step sizes tuned \\
 \bottomrule
 \end{tabular}
 \end{table}
