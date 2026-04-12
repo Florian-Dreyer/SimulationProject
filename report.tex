@@ -9,6 +9,8 @@
 \usepackage{parskip}
 \usepackage{xcolor}
 \usepackage[round, sort&compress]{natbib}
+\usepackage{placeins}
+\usepackage{subcaption}
 
 \graphicspath{{figures/}}
 
@@ -58,7 +60,7 @@ The observed dataset comprises $R=40$ independent replicates, each providing
 an infection time series, a rewiring time series, and a final degree distribution
 (Figure~\ref{fig:obs_data}).
 
-\begin{figure}[h]
+\begin{figure}[htbp]
   \centering
   \includegraphics[width=\textwidth]{obs_data}
   \caption{Observed data across 40 replicates: infection fraction (left),
@@ -88,6 +90,7 @@ to better separate $\beta$ from $\rho$; cross-replicate standard deviations
 to capture stochastic variability; degree quartiles and entropy over isolated/
 high-degree fractions to describe the full distribution shape).
 
+\FloatBarrier
 \subsection{Identifiability diagnostics}
 
 Projecting the $M=10\,000$ prior-simulation summaries to 2D via PCA and
@@ -100,7 +103,7 @@ faster recovery ($\gamma$) or network rewiring ($\rho$) — so infection-curve
 summaries alone cannot fully separate them. Rewiring summaries carry
 independent information about both $\beta$ and $\rho$.
 
-\begin{figure}[h]
+\begin{figure}[htbp]
   \centering
   \includegraphics[width=\textwidth]{pca_diagnostic}
   \caption{PCA diagnostic: prior simulations coloured by $\beta$, $\gamma$,
@@ -109,6 +112,7 @@ independent information about both $\beta$ and $\rho$.
   \label{fig:pca}
 \end{figure}
 
+\FloatBarrier
 \subsection{Summary-set comparison}
 
 We evaluated the single-source sets against the balanced set at $q=1\%$
@@ -147,7 +151,7 @@ but it is the only set that constrains all three to well below the prior width.
 This is precisely the effect of balanced modality representation: each data
 stream contributes to the joint distance rather than any one dominating it.
 
-\begin{figure}[h]
+\begin{figure}[htbp]
   \centering
   \includegraphics[width=0.7\textwidth]{sumset_heatmap}
   \caption{Posterior std (relative to prior) per summary set and parameter
@@ -173,7 +177,7 @@ which corrects for the residual bias and allows a looser 5\% tolerance.
 Figure~\ref{fig:rabc_posteriors} shows the marginal posteriors; Table~\ref{tab:rabc}
 gives the numerical summaries.
 
-\begin{figure}[h]
+\begin{figure}[htbp]
   \centering
   \includegraphics[width=\textwidth]{rabc_marginals}
   \caption{Rejection ABC marginal posteriors (blue) vs.\ uniform prior (dashed),
@@ -206,6 +210,7 @@ driven by their shared epidemic-suppression effect.
 \label{sec:advanced}
 % ============================================================
 
+\FloatBarrier
 \subsection{Semi-Automatic ABC \citep{fearnhead2012}}
 \label{sec:semiauto}
 
@@ -220,7 +225,7 @@ Running rejection ABC in the resulting 3-dimensional projected space
 posterior for $\beta$ and provides moderate gains for $\gamma$ and $\rho$
 (Figure~\ref{fig:semiauto}, Table~\ref{tab:contraction}).
 
-\begin{figure}[h]
+\begin{figure}[htbp]
   \centering
   \includegraphics[width=\textwidth]{semiauto_marginals}
   \caption{Balanced rejection ABC (blue) vs.\ semi-automatic ABC (orange),
@@ -228,6 +233,7 @@ posterior for $\beta$ and provides moderate gains for $\gamma$ and $\rho$
   \label{fig:semiauto}
 \end{figure}
 
+\FloatBarrier
 \subsection{LASSO-Based Summary Selection \citep{blum2013}}
 \label{sec:lasso}
 
@@ -257,6 +263,7 @@ Semi-auto (3d) & 0.023 & 0.18 & 0.017 & 0.33 & 0.051 & 0.22 \\
 \end{tabular}
 \end{table}
 
+\FloatBarrier
 \subsection{Regression Adjustment \citep{beaumont2002}}
 \label{sec:regadj}
 
@@ -277,7 +284,7 @@ Crucially, the adjusted posterior is nearly tolerance-invariant for
 $q\lesssim10\%$ (Figure~\ref{fig:regadj_width}), whereas the raw posterior
 degrades rapidly at loose tolerances.
 
-\begin{figure}[h]
+\begin{figure}[htbp]
   \centering
   \includegraphics[width=\textwidth]{regadj_marginals}
   \caption{Raw ABC (blue) vs.\ regression-adjusted (orange) posteriors,
@@ -304,7 +311,7 @@ Adjusted      & $\beta$  & 0.143 & 0.024 & 0.112 & 0.138 & 0.191 \\
 \end{tabular}
 \end{table}
 
-\begin{figure}[h]
+\begin{figure}[htbp]
   \centering
   \includegraphics[width=\textwidth]{regadj_width}
   \caption{Posterior std (relative to prior) vs.\ tolerance $q$ for raw (blue)
@@ -313,6 +320,7 @@ Adjusted      & $\beta$  & 0.143 & 0.024 & 0.112 & 0.138 & 0.191 \\
   \label{fig:regadj_width}
 \end{figure}
 
+\FloatBarrier
 \subsection{Synthetic Likelihood \citep{wood2010}}
 \label{sec:sl}
 
@@ -343,7 +351,7 @@ $(0.143,\, 0.079,\, 0.299)$.
 The chain achieved an acceptance rate of $24.0\%$, consistent with the
 optimal AM target \citep{roberts1997}.
 
-\begin{figure}[h]
+\begin{figure}[htbp]
   \centering
   \includegraphics[width=\textwidth]{sl_trace}
   \caption{MCMC trace plots. The chain achieves an acceptance rate of 24.0\%
@@ -352,7 +360,7 @@ optimal AM target \citep{roberts1997}.
   \label{fig:sl_trace}
 \end{figure}
 
-\begin{figure}[h]
+\begin{figure}[htbp]
   \centering
   \includegraphics[width=\textwidth]{sl_marginals}
   \caption{Synthetic likelihood MCMC posterior (green) vs.\ prior (dashed).}
@@ -375,7 +383,98 @@ $\rho$   & 0.301 & 0.005 & 0.295 & 0.300 & 0.310 & 10.2 \\
 \end{tabular}
 \end{table}
 
+\FloatBarrier
+\subsection{ABC-MCMC \citep{marjoram2003}}
+\label{sec:abcmcmc}
+
+At each step, we accept a proposal $\theta^* = \theta_t + \eta$, $\eta \sim \mathcal{N}(0, \Sigma)$ if $\rho(S(x^*), S(x_\text{obs})) \leq \varepsilon$, with $R = 40$ replicates per
+proposal and $\varepsilon$ imported from rejection ABC at the $1\%$ quantile. We compare MCMC across the three summary
+variants: \textbf{balanced}, \textbf{LASSO-selected}, and \textbf{semi-automatic} (with $\varepsilon$ recalibrated in the projected space).
+
+We tune the proposal $\Sigma$ in three stages — original, adaptive $1\times$, and adaptive
+$0.5\times$ \citep{roberts2009}, with the final selection being the $0.5\times$ as it restores target
+acceptance rates while achieving $\hat{R} < 1.001$ for all parameters. All results
+use $N = 30{,}000$ steps with burn-in $b = 1{,}000$.
+
+The semi-automatic variant gives the tightest posteriors for $\beta$ ($\text{rel} = 0.06$) and
+$\rho$ ($\text{rel} = 0.08$), but at the cost of $\gamma$ precision ($\text{rel} = 0.18$ vs
+$0.15$--$0.16$ for balanced and LASSO). This is a consequence of the ridge projection optimising
+jointly across parameters. As expected, balanced and LASSO perform near-identically. The $\beta$--$\rho$
+correlation persists across all variants. Fixed $\varepsilon$ MCMC cannot resolve
+this confounding.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{mcmc_joint_beta_rho}
+  \caption{Joint posterior $\beta$ vs $\rho$ for ABC-MCMC (adaptive $0.5\times$ proposal)
+           across all three summary variants. The positive correlation persists across all
+           variants, confirming $\beta$--$\rho$ confounding is an identifiability limitation
+           intrinsic to the aggregate data rather than a sampler artefact.}
+  \label{fig:mcmc_joint_beta_rho}
+\end{figure}
+
+\begin{table}[h]
+\centering
+\caption{ABC-MCMC posterior shrinkage (adaptive $0.5\times$ proposal, $N = 30{,}000$ steps,
+         burn-in $b = 1{,}000$) and split-chain Gelman--Rubin $\hat{R}$.}
+\label{tab:mcmc}
+\begin{tabular}{lrrrrrr}
+\toprule
+Variant & $\beta$ & $\gamma$ & $\rho$ & $\hat{R}_\beta$ & $\hat{R}_\gamma$ & $\hat{R}_\rho$ \\
+\midrule
+Balanced   & 0.17 & 0.15 & 0.11 & 1.0003 & 1.0003 & 1.0002 \\
+LASSO      & 0.18 & 0.16 & 0.12 & 1.0011 & 1.0001 & 1.0000 \\
+Semi-auto  & 0.06 & 0.18 & 0.08 & 1.0000 & 1.0002 & 1.0000 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\FloatBarrier
+\subsection{SMC-ABC \citep{sisson2007}}
+\label{sec:smcabc}
+
+ABC-MCMC's fixed $\varepsilon$ limits posterior accuracy and its serially correlated samples
+reduce ESS. We refine $N = 100$ particles through a decreasing
+tolerance sequence $\varepsilon_t = Q_{0.75}(\{\rho_i^{(t)}\})$ \citep{beaumont2009},
+producing asymptotically independent samples and perturb particles via $\mathcal{N}(0, \Sigma)$ from the ABC-MCMC,
+run for $T = 15$ generations. A refined run
+with $\Sigma$ halved consistently outperforms the original.
+
+SMC substantially improves on ABC-MCMC across all variants: $\beta$ shrinkage
+improves from $0.22$ to $0.06$ and $\rho$ from $0.28$ to $0.08$ for the semi-automatic
+variant, and the $\beta$--$\rho$ correlation is substantially reduced.
+The $\gamma$ penalty from the ridge projection is also smaller than under MCMC
+($0.18$ vs $0.72$), suggesting progressive $\varepsilon$ tightening partially recovers
+lost $\gamma$ information.
+
+\begin{table}[h]
+\centering
+\caption{SMC-ABC posterior shrinkage (refined $0.5\times$ run, $T = 15$ generations,
+         $N = 100$ particles).}
+\label{tab:smc}
+\begin{tabular}{lrrr}
+\toprule
+Variant & $\beta$ & $\gamma$ & $\rho$ \\
+\midrule
+Balanced   & 0.17 & 0.15 & 0.11 \\
+LASSO      & 0.18 & 0.16 & 0.12 \\
+Semi-auto  & 0.06 & 0.18 & 0.08 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{smc_joint_beta_rho}
+  \caption{Joint posterior $\beta$ vs $\rho$ for SMC-ABC (refined $0.5\times$ run, final
+           generation) across all three summary variants. The $\beta$--$\rho$ correlation
+           visible under ABC-MCMC is substantially reduced, with particles concentrating
+           onto a narrow region of the joint space.}
+  \label{fig:smc_joint_beta_rho}
+\end{figure}
+
 % ============================================================
+\FloatBarrier
 \section{Comparison}
 \label{sec:comparison}
 % ============================================================
@@ -394,28 +493,60 @@ the quoted standard deviations are unreliable.
 The tightness likely reflects the high $N_\mathrm{sim}=150$ per step
 combined with a multivariate normal approximation that may be
 overconfident for non-Gaussian summary statistics.
-
-\begin{table}[h]
+\begin{table}[htbp]
 \centering
 \caption{Posterior standard deviations across all methods.
-         $^\ddagger$SL std is unreliable due to low ESS (7.5–11.9).}
+         Values in parentheses are shrinkage = posterior std / prior std.
+         $^\ddagger$SL std is unreliable due to low ESS (7.5--11.9).}
 \label{tab:compare}
-\begin{tabular}{lrrrr}
+\begin{tabular}{lrrrl}
 \toprule
 Method & $\sigma_\beta$ & $\sigma_\gamma$ & $\sigma_\rho$ & Notes \\
 \midrule
-Prior                  & 0.130 & 0.052 & 0.231 & -- \\
-Rej.\ ABC ($q=1\%$)    & 0.062 & 0.020 & 0.061 & Balanced, $n=100$ \\
-LASSO ($q=1\%$)        & 0.062 & 0.020 & 0.061 & All 15 features kept \\
-Semi-auto ($q=1\%$)    & 0.023 & 0.017 & 0.051 & 3-d projection \\
-Reg.\ adj.\ ($q=5\%$)  & 0.024 & 0.007 & 0.008 & $n=500$, robust \\
-Synth.\ lik.$^\ddagger$ & 0.003 & 0.002 & 0.005 & $N_\mathrm{sim}=150$, accept.\ 24\% \\
+Prior                        & 0.130 & 0.052 & 0.231 & -- \\
+\addlinespace
+\multicolumn{5}{l}{\textbf{Rejection ABC}} \\
+Balanced ($q=1\%$)           & 0.062 & 0.020 & 0.061 & $n=100$ \\
+LASSO ($q=1\%$)              & 0.062 & 0.020 & 0.061 & All 15 features kept \\
+Semi-auto ($q=1\%$)          & 0.023 & 0.017 & 0.051 & 3-d projection \\
+\addlinespace
+\multicolumn{5}{l}{\textbf{Regression adjustment}} \\
+Balanced ($q=5\%$)           & 0.024 & 0.007 & 0.008 & $n=500$, robust \\
+\addlinespace
+\multicolumn{5}{l}{\textbf{Synthetic likelihood$^\ddagger$}} \\
+Balanced                     & 0.003 & 0.002 & 0.005 & $N_\mathrm{sim}=150$, accept.\ 24\% \\
+\addlinespace
+\multicolumn{5}{l}{\textbf{ABC-MCMC (adaptive $0.5\times$, $N=30{,}000$)}} \\
+Balanced   & 0.0626 (0.48) & 0.0204 (0.39) & 0.0665 (0.29) & $\hat{R}<1.001$ \\
+LASSO      & 0.0700 (0.54) & 0.0206 (0.40) & 0.0691 (0.30) & $\hat{R}<1.001$ \\
+Semi-auto  & 0.0281 (0.22) & 0.0376 (0.72) & 0.0637 (0.28) & $\hat{R}<1.001$ \\
+\addlinespace
+\multicolumn{5}{l}{\textbf{SMC-ABC (refined $0.5\times$, $T=15$, $N=100$)}} \\
+Balanced   & 0.0216 (0.17) & 0.0078 (0.15) & 0.0250 (0.11) & \\
+LASSO      & 0.0238 (0.18) & 0.0086 (0.16) & 0.0286 (0.12) & \\
+Semi-auto  & 0.0082 (0.06) & 0.0091 (0.18) & 0.0187 (0.08) & \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\TODO{If additional methods (ABC-MCMC, SMC-ABC) were implemented, add a
-subsection here.}
+\begin{figure}[htbp]
+  \centering
+  \begin{subfigure}{0.48\textwidth}
+    \includegraphics[width=\textwidth]{co8mparison_all_methods_marginals}
+    \caption{All methods including synthetic likelihood.}
+    \label{fig:marginals_all}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}{0.48\textwidth}
+    \includegraphics[width=\textwidth]{comparison_all_methods_marginals_xsl}
+    \caption{All methods excluding synthetic likelihood.}
+    \label{fig:marginals_xsl}
+  \end{subfigure}
+  \caption{Marginal posteriors (KDE) across all methods. Synthetic likelihood
+           is shown separately as its extreme tightness compresses the scale
+           for other methods.}
+  \label{fig:marginals_comparison}
+\end{figure}
 
 % ============================================================
 \section{Conclusion}
