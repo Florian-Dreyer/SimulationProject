@@ -532,7 +532,7 @@ Semi-auto  & 0.0082 (0.06) & 0.0091 (0.18) & 0.0187 (0.08) & \\
 \begin{figure}[htbp]
   \centering
   \begin{subfigure}{0.48\textwidth}
-    \includegraphics[width=\textwidth]{co8mparison_all_methods_marginals}
+    \includegraphics[width=\textwidth]{comparison_all_methods_marginals}
     \caption{All methods including synthetic likelihood.}
     \label{fig:marginals_all}
   \end{subfigure}
@@ -548,7 +548,22 @@ Semi-auto  & 0.0082 (0.06) & 0.0091 (0.18) & 0.0187 (0.08) & \\
   \label{fig:marginals_comparison}
 \end{figure}
 
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{comparison_joint_beta_rho}
+  \caption{Joint posterior $\beta$ vs $\rho$ across all methods (rows) and
+           summary variants (columns). Rejection ABC shows a broad positive
+           correlation; regression adjustment and synthetic likelihood
+           concentrate onto a narrow region but may be overconfident;
+           ABC-MCMC preserves the correlation under fixed $\varepsilon$;
+           SMC-ABC substantially reduces confounding through iterative
+           $\varepsilon$ tightening, with the semi-automatic variant
+           producing the tightest joint posterior.}
+  \label{fig:joint_beta_rho_all}
+\end{figure}
+
 % ============================================================
+\FloatBarrier
 \section{Conclusion}
 \label{sec:conclusion}
 % ============================================================
