@@ -1,6 +1,6 @@
 \documentclass[11pt, a4paper]{article}
 
-\usepackage[margin=1.8cm]{geometry}
+\usepackage[margin=1.7cm]{geometry}
 \usepackage{amsmath, amssymb}
 \usepackage{booktabs}
 \usepackage{graphicx}
@@ -14,14 +14,11 @@
 
 \graphicspath{{figures/}}
 
-% Placeholder macro – remove before submission
-\newcommand{\TODO}[1]{\textcolor{red}{\textbf{[TODO: #1]}}}
-
 \title{\textbf{Simulation-Based Inference for an Adaptive-Network SIR Model}}
 \author{%
   Florian Tobias Dreyer (A0338032M) \and
   Michelle Than Yi Xuan (A0338187R) \and
-  \TODO{Group member 3 (Student ID)}
+  Tyler Coventry-Searle (A0339854M)
 }
 \date{}
 
@@ -78,7 +75,7 @@ The underlying contact network trajectory is never observed.
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=\textwidth]{obs_data}
+  \includegraphics[width=0.85\textwidth]{obs_data}
   \caption{Observed data across 40 replicates: infection fraction (left),
            rewiring events (centre), final degree distribution (right).}
   \label{fig:obs_data}
@@ -136,15 +133,16 @@ Projecting the $M=10\,000$ prior-simulation summaries to 2D via PCA and
 colouring by parameter value (Figure~\ref{fig:pca}) reveals clear gradients
 for $\gamma$, moderate structure for $\beta$, and weak but non-trivial
 structure for $\rho$.
-This confirms the central identifiability challenge: $\beta$ and $\rho$
-both suppress the epidemic — via higher transmission rate being countered by
-faster recovery ($\gamma$) or network rewiring ($\rho$) — so infection-curve
-summaries alone cannot fully separate them. Rewiring summaries carry
-independent information about both $\beta$ and $\rho$.
+This confirms the central identifiability challenge: $\beta$ drives spread
+while $\rho$ suppresses it through rewiring, but their effects on the
+aggregate infection curve partially cancel — high $\beta$ paired with high
+$\rho$ can produce a similar epidemic trajectory to low $\beta$ paired with
+low $\rho$. Infection-curve summaries alone therefore cannot fully separate
+them; rewiring summaries carry the independent signal needed for both.
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.8\textwidth]{pca_diagnostic}
+  \includegraphics[width=0.85\textwidth]{pca_diagnostic}
   \caption{PCA diagnostic: prior simulations coloured by $\beta$, $\gamma$,
            $\rho$ (left to right). Clear gradients for $\gamma$; partial
            confounding visible in $\beta$–$\rho$ panels.}
@@ -206,18 +204,17 @@ We drew $M=10\,000$ prior samples, computed the standardised Euclidean distance
 between each simulated and observed summary vector, and accepted draws below the
 1\% empirical quantile \citep{pritchard1999}, giving $\varepsilon=1.2852$ and
 $n_\mathrm{acc}=100$.
-The 1\% quantile balances a variance--bias tradeoff: tighter tolerances reduce
-the approximation bias (accepted draws are closer to the true posterior) but
-yield fewer samples and a noisier posterior estimate, while looser tolerances
-give more stable estimates at the cost of a prior-biased posterior.
-This tradeoff motivates regression adjustment (Section~\ref{sec:regadj}),
-which corrects for the residual bias and allows a looser 5\% tolerance.
+Standardised Euclidean distance is parameter-free and treats each $z$-scored summary
+equally, avoiding manual weighting of modalities.
+The 1\% quantile balances bias against variance: tighter tolerances reduce approximation
+bias but increase Monte Carlo noise; the residual bias at $q=1\%$ motivates
+regression adjustment (Section~\ref{sec:regadj}), which allows a looser 5\% tolerance.
 Figure~\ref{fig:rabc_posteriors} shows the marginal posteriors; Table~\ref{tab:rabc}
 gives the numerical summaries.
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=\textwidth]{rabc_marginals}
+  \includegraphics[width=0.8\textwidth]{rabc_marginals}
   \caption{Rejection ABC marginal posteriors (blue) vs.\ uniform prior (dashed),
            \emph{balanced} set, $\varepsilon=1.2852$, $n_\mathrm{acc}=100$.}
   \label{fig:rabc_posteriors}
@@ -240,8 +237,9 @@ $\rho$   & 0.334 & 0.061 & 0.291 & 0.332 & 0.378 \\
 
 $\gamma$ is best-identified (directly controls epidemic duration),
 $\beta$ moderately so, and $\rho$ is hardest to constrain — consistent with
-the PCA diagnostic and the negative $(\beta,\rho)$ posterior correlation
-driven by their shared epidemic-suppression effect.
+the PCA diagnostic and the positive $(\beta,\rho)$ posterior correlation:
+high $\beta$ can be offset by high $\rho$ to produce a similar epidemic,
+so the posterior trades off transmission rate against rewiring rate.
 
 % ============================================================
 \section{Advanced Methods}
@@ -264,7 +262,7 @@ posterior for $\beta$ and provides moderate gains for $\gamma$ and $\rho$
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.8\textwidth]{semiauto_marginals}
+  \includegraphics[width=0.85\textwidth]{semiauto_marginals}
   \caption{Balanced rejection ABC (blue) vs.\ semi-automatic ABC (orange),
            $q=1\%$.}
   \label{fig:semiauto}
@@ -320,7 +318,7 @@ $q\lesssim10\%$, whereas the raw posterior degrades rapidly at loose tolerances.
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=\textwidth]{regadj_marginals}
+  \includegraphics[width=0.85\textwidth]{regadj_marginals}
   \caption{Raw ABC (blue) vs.\ regression-adjusted (orange) posteriors,
            $q=5\%$, \emph{balanced} set.}
   \label{fig:regadj_marginals}
@@ -375,18 +373,18 @@ $(0.143,\, 0.079,\, 0.299)$.
 The chain achieved an acceptance rate of $24.0\%$, consistent with the
 optimal AM target \citep{roberts1997}.
 
-\begin{figure}[htbp]
+\begin{figure}[h]
   \centering
-  \includegraphics[width=\textwidth]{sl_trace}
+  \includegraphics[width=0.85\textwidth]{sl_trace}
   \caption{MCMC trace plots. The chain achieves an acceptance rate of 24.0\%
            and mixes across the posterior, though the ACF decays slowly
            (thinning interval 31), resulting in ESS of 7.5–11.9.}
   \label{fig:sl_trace}
 \end{figure}
 
-\begin{figure}[htbp]
+\begin{figure}[h]
   \centering
-  \includegraphics[width=\textwidth]{sl_marginals}
+  \includegraphics[width=0.85\textwidth]{sl_marginals}
   \caption{Synthetic likelihood MCMC posterior (green) vs.\ prior (dashed).}
   \label{fig:sl_marginals}
 \end{figure}
@@ -419,16 +417,16 @@ $0.5\times$ \citep{roberts2009}, with the final selection being the $0.5\times$ 
 acceptance rates while achieving $\hat{R} < 1.001$ for all parameters. All results
 use $N = 30{,}000$ steps with burn-in $b = 1{,}000$.
 
-The semi-automatic variant gives the tightest posteriors for $\beta$ ($\text{rel} = 0.06$) and
-$\rho$ ($\text{rel} = 0.08$), but at the cost of $\gamma$ precision ($\text{rel} = 0.18$ vs
-$0.15$--$0.16$ for balanced and LASSO). This is a consequence of the ridge projection optimising
+The semi-automatic variant gives the tightest posteriors for $\beta$ ($\text{rel} = 0.22$) and
+$\rho$ ($\text{rel} = 0.28$), but at the cost of $\gamma$ precision ($\text{rel} = 0.72$ vs
+$0.39$--$0.40$ for balanced and LASSO). This is a consequence of the ridge projection optimising
 jointly across parameters. As expected, balanced and LASSO perform near-identically. The $\beta$--$\rho$
 correlation persists across all variants. Fixed $\varepsilon$ MCMC cannot resolve
 this confounding.
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.8\textwidth]{mcmc_joint_beta_rho}
+  \includegraphics[width=0.85\textwidth]{mcmc_joint_beta_rho}
   \caption{Joint posterior $\beta$ vs $\rho$ for ABC-MCMC (adaptive $0.5\times$ proposal)
            across all three summary variants. The positive correlation persists across all
            variants, confirming $\beta$--$\rho$ confounding is an identifiability limitation
@@ -445,9 +443,9 @@ this confounding.
 \toprule
 Variant & $\beta$ & $\gamma$ & $\rho$ & $\hat{R}_\beta$ & $\hat{R}_\gamma$ & $\hat{R}_\rho$ \\
 \midrule
-Balanced   & 0.17 & 0.15 & 0.11 & 1.0003 & 1.0003 & 1.0002 \\
-LASSO      & 0.18 & 0.16 & 0.12 & 1.0011 & 1.0001 & 1.0000 \\
-Semi-auto  & 0.06 & 0.18 & 0.08 & 1.0000 & 1.0002 & 1.0000 \\
+Balanced   & 0.48 & 0.39 & 0.29 & 1.0003 & 1.0003 & 1.0002 \\
+LASSO      & 0.54 & 0.40 & 0.30 & 1.0011 & 1.0001 & 1.0000 \\
+Semi-auto  & 0.22 & 0.72 & 0.28 & 1.0000 & 1.0002 & 1.0000 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -471,7 +469,7 @@ lost $\gamma$ information (see Table~\ref{tab:compare} for full numerical result
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.8\textwidth]{smc_joint_beta_rho}
+  \includegraphics[width=0.85\textwidth]{smc_joint_beta_rho}
   \caption{Joint posterior $\beta$ vs $\rho$ for SMC-ABC (refined $0.5\times$ run, final
            generation) across all three summary variants. The $\beta$--$\rho$ correlation
            visible under ABC-MCMC is substantially reduced, with particles concentrating
@@ -498,7 +496,7 @@ the quoted standard deviations are unreliable.
 The tightness likely reflects the high $N_\mathrm{sim}=150$ per step
 combined with a multivariate normal approximation that may be
 overconfident for non-Gaussian summary statistics.
-\begin{table}[htbp]
+\begin{table}[h]
 \centering
 \caption{Posterior standard deviations across all methods.
          Values in parentheses are shrinkage = posterior std / prior std.
@@ -536,13 +534,13 @@ Semi-auto  & 0.0082 (0.06) & 0.0091 (0.18) & 0.0187 (0.08) & \\
 
 \begin{figure}[htbp]
   \centering
-  \begin{subfigure}{0.48\textwidth}
+  \begin{subfigure}{0.425\textwidth}
     \includegraphics[width=\textwidth]{comparison_all_methods_marginals}
     \caption{All methods including synthetic likelihood.}
     \label{fig:marginals_all}
   \end{subfigure}
   \hfill
-  \begin{subfigure}{0.48\textwidth}
+  \begin{subfigure}{0.425\textwidth}
     \includegraphics[width=\textwidth]{comparison_all_methods_marginals_xsl}
     \caption{All methods excluding synthetic likelihood.}
     \label{fig:marginals_xsl}
@@ -555,7 +553,7 @@ Semi-auto  & 0.0082 (0.06) & 0.0091 (0.18) & 0.0187 (0.08) & \\
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=\textwidth]{comparison_joint_beta_rho}
+  \includegraphics[width=0.85\textwidth]{comparison_joint_beta_rho}
   \caption{Joint posterior $\beta$ vs $\rho$ across all methods (rows) and
            summary variants (columns). Rejection ABC shows a broad positive
            correlation; regression adjustment and synthetic likelihood
@@ -588,33 +586,20 @@ similar infection curves — leaving a genuine positive posterior correlation
 between them that persists across all methods and summary sets.
 Rewiring summaries carry the independent signal needed to partially resolve
 this confounding; infection-curve summaries alone are essentially uninformative
-about $\rho$.
-This identifiability structure is intrinsic to the aggregate observables and
-is not a sampler artefact.
+about $\rho$, and this structure is intrinsic to the observables rather than a sampler artefact.
 
 \paragraph{Method comparison.}
 Each method addresses a specific limitation of its predecessor.
-Rejection ABC provides a simple, assumption-free baseline but is constrained
-by the curse of dimensionality and the fixed tolerance $\varepsilon$.
-Semi-automatic ABC \citep{fearnhead2012} partially resolves the dimensionality
-problem by projecting to 3D via ridge regression, substantially tightening
+Semi-automatic ABC reduces summary dimensionality via ridge projection, tightening
 $\beta$ and $\rho$ at the cost of $\gamma$ precision.
-Regression adjustment \citep{beaumont2002} dramatically sharpens all three
-posteriors ($\sigma_\rho$ falls from 0.087 to 0.008) by correcting for the
-residual gap between accepted and observed summaries, and is robust to the
-choice of tolerance for $q \lesssim 10\%$.
-ABC-MCMC \citep{marjoram2003} concentrates simulation effort in high-posterior
-regions and achieves well-converged chains ($\hat{R} < 1.001$), but the fixed
+Regression adjustment \citep{beaumont2002} dramatically sharpens all posteriors
+($\sigma_\rho$: 0.087$\to$0.008) and is robust to the choice of tolerance for $q\lesssim10\%$.
+ABC-MCMC \citep{marjoram2003} achieves well-converged chains ($\hat{R}<1.001$) but its fixed
 $\varepsilon$ leaves the $\beta$--$\rho$ confounding unresolved.
-SMC-ABC \citep{sisson2007} delivers the best overall performance: iterative
-tolerance tightening substantially reduces the $\beta$--$\rho$ correlation and
-produces asymptotically independent samples, with the semi-automatic variant
-reaching shrinkage of 0.06 for $\beta$ and 0.08 for $\rho$.
-Synthetic likelihood \citep{wood2010} yields the numerically sharpest posterior
-but its low effective sample size (ESS 7.5--11.9 from 1500 post-burn-in steps)
-makes those standard deviations unreliable; the multivariate Gaussian
-approximation to the summary distribution is likely overconfident for the
-non-Gaussian degree summaries.
+SMC-ABC \citep{sisson2007} delivers the best overall performance, with the semi-automatic
+variant reaching shrinkage of 0.06 for $\beta$ and 0.08 for $\rho$.
+Synthetic likelihood \citep{wood2010} yields the numerically sharpest posterior but its
+low ESS (7.5--11.9) makes those standard deviations unreliable.
 
 \paragraph{Limitations and future work.}
 The most pressing limitation is the low ESS of the synthetic likelihood chain,
